@@ -1,7 +1,9 @@
 #include <fstream>
 #include <iostream>
+#include <set>
 #include <nlohmann/json.hpp>
 
+///Структура завдання
 struct TaskObj {
     unsigned id;
     bool flag;
@@ -16,7 +18,8 @@ struct TaskObj {
 
 using json = nlohmann::json;
 
-void to_json(json &j, std::vector<TaskObj> &objs) {
+///Серіалізація завдань з вектора objs в json
+void to_json(json &j, const std::vector<TaskObj> &objs) {
     for (const auto& obj : objs) {
         const char *str_id = std::to_string(obj.id).c_str();
         j[str_id]["flag"] = obj.flag;
@@ -24,19 +27,17 @@ void to_json(json &j, std::vector<TaskObj> &objs) {
     }
 }
 
+///Десеріалізація завдань з json в вектор objs
 void from_json(const json &j, std::vector<TaskObj> &objs) {
-    for (int i = 1; true ; ++i) {
-        const char *str_id = std::to_string(i).c_str();
-        try {
-            auto content = j.at(str_id)["content"].get<std::string>();
-            auto flag = j.at(str_id)["flag"].get<bool>();
-            objs.push_back(TaskObj(i, content, flag));
-        } catch (json::out_of_range& exception) {
-            break;
-        }
+    for (const auto& [string_id, val] : j.items()) {
+        auto id = std::stoi(string_id);
+        auto content = val.at("content").get<std::string>();
+        auto flag = val.at("flag").get<bool>();
+        objs.emplace_back(id, content, flag);
     }
 }
 
+///Читає і повертає вміст файлу за вказаним шляхом
 std::string read_file(const std::string& path) {
     std::string result, line;
     std::ifstream file(path);
@@ -49,6 +50,7 @@ std::string read_file(const std::string& path) {
     return result;
 }
 
+///Записує json об'єкт в файл за вказаним шляхом, з вказаним відступом (4 за умовчанням)
 void write_json_to_file(const json& j, const std::string& path, const int indent = 4) {
     std::ofstream file(path);
     if (!file.is_open())
@@ -57,21 +59,41 @@ void write_json_to_file(const json& j, const std::string& path, const int indent
     file.close();
 }
 
+///Виводить на екран об'єкт завдання
 void print_task(const TaskObj& task) {
     std::cout << task.id << " " << task.content << "|" << task.flag << std::endl;
 }
 
+///Виводить на екран указаний проміжок завдань
 void print_tasks(std::vector<TaskObj>::const_iterator tasks_begin, std::vector<TaskObj>::const_iterator tasks_end) {
     for (auto i = tasks_begin; i != tasks_end; ++i) {
         print_task(*i);
     }
 }
 
+///Читає задані команди з консолі та повертає об'єкт pair з first - значенням команди, second - аргументом
+///Якщо команда не знаходиться в списку commands, то повертається pair із пустими значеннями
+std::pair<std::string, std::string> read_command_from_cin(const std::set<std::string>& commands) {
+    std::string cmd;
+    std::cin >> cmd;
+    if (commands.contains(cmd)) {
+        std::string arg;
+        std::cin >> arg;
+        return std::make_pair(cmd, arg);
+    }
+    return std::make_pair("", "");
+}
+
 int main() {
-    //enable alphabetic output of bool values
+    //включає флаг (bool alphabetic) для стандартного потоку виводу
     std::cout << std::boolalpha;
 
+    const std::set<std::string> cmds = {"add", "remove", "mark", "exit", "save"};
+
     std::vector<TaskObj> tasks;
+
+    const auto command_pair = read_command_from_cin(cmds);
+    std::cout << command_pair.first << " " << command_pair.second << std::endl;
 
     return 0;
 };
