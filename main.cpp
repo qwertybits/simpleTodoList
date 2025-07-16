@@ -113,6 +113,14 @@ void load_tasks(const std::string& path, std::vector<TaskObj>& tasks) {
     from_json(j, tasks);
 }
 
+void mark_task(std::vector<TaskObj>& tasks) {
+    std::cout << "> ";
+    const auto id = std::stoi(read_command_from_cin());
+    if (id > tasks.size() || id < 0)
+        throw std::runtime_error("Task ID out of range");
+    tasks.at(id).flag = !tasks.at(id).flag;
+}
+
 int main() {
     //включає флаг (bool alphabetic) для стандартного потоку виводу
     std::cout << std::boolalpha;
@@ -137,6 +145,8 @@ int main() {
                 remove_task(tasks);
             } else if (cmd == "show_all") {
                 print_tasks(tasks);
+            } else if (cmd == "mark") {
+                mark_task(tasks);
             }
         } catch (std::runtime_error& e) {
             std::cout << e.what() << std::endl;
