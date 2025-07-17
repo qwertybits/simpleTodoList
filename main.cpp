@@ -50,21 +50,21 @@ std::string read_file(const std::string& path) {
     return result;
 }
 
-///Записує json об'єкт в файл за вказаним шляхом, з вказаним відступом (4 за умовчанням)
-void write_json_to_file(const json& j, const std::string& path, const int indent = 4) {
+///Записує вміст у файл за вказаним шляхом
+void write_to_file(const std::string& path, const std::string& content) {
     std::ofstream file(path);
     if (!file.is_open())
         throw std::runtime_error("Could not open file " + path);
-    file << j.dump(indent);
+    file << content;
     file.close();
 }
 
-///Виводить на екран об'єкт завдання
+///Виводить в консоль об'єкт завдання
 void print_task(const TaskObj& task, const int id) {
-    std::cout << id << ": " << task.content << "|" << task.flag << std::endl;
+    std::cout << id << "[" << (task.flag ? "X" : " ") << "] " << task.content << std::endl;
 }
 
-///Виводить на екран указаний проміжок завдань
+///Виводить в консоль завдання
 void print_tasks(const std::vector<TaskObj>& tasks) {
     for (int i = 0; i < tasks.size(); ++i) {
         print_task(tasks[i], i);
@@ -79,6 +79,7 @@ std::string read_command_from_cin() {
     return cmd;
 }
 
+///Читає аргумент команди
 std::string read_argument_from_cin() {
     std::string arg;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // чисто щоб пофіксить проблему з getline
@@ -86,6 +87,7 @@ std::string read_argument_from_cin() {
     return arg;
 }
 
+///Додає завдання в список
 void add_task(std::vector<TaskObj>& tasks) {
     std::cout << "> ";
     const auto content = read_argument_from_cin();
@@ -93,6 +95,7 @@ void add_task(std::vector<TaskObj>& tasks) {
         tasks.emplace_back(content);
 }
 
+///Видаляє завдання з списку по id
 void remove_task(std::vector<TaskObj>& tasks) {
     const auto id = std::stoi(read_command_from_cin());
     if (id > tasks.size() || id < 0)
@@ -104,7 +107,7 @@ void remove_task(std::vector<TaskObj>& tasks) {
 void save_tasks(const std::string& path, const std::vector<TaskObj>& tasks) {
     json j;
     to_json(j, tasks);
-    write_json_to_file(j, path);
+    write_to_file(path, j.dump(4));
 }
 
 ///Завантажує завдання за вказаним шляхом
@@ -147,7 +150,7 @@ int main() {
                 print_tasks(tasks);
             } else if (cmd == "mark") {
                 mark_task(tasks);
-            }
+            } else if (cmd == )
         } catch (std::runtime_error& e) {
             std::cout << e.what() << std::endl;
         }
