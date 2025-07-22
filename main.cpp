@@ -1,6 +1,5 @@
 #include <fstream>
 #include <iostream>
-#include <set>
 #include <nlohmann/json.hpp>
 
 constexpr std::string DEFAULT_PATH = "task.json";
@@ -70,36 +69,35 @@ void print_tasks(const std::vector<TaskObj>& tasks) {
     for (int i = 0; i < tasks.size(); ++i) {
         print_task(tasks[i], i);
     }
-    if (tasks.empty()) {
-        std::cout << "No tasks" << std::endl;
-    }
 }
 
 ///Читає задані команди з консолі та повертає об'єкт pair з first - значенням команди, second - аргументом
 ///Якщо команда не знаходиться в списку commands, то повертається pair із пустими значеннями
-std::pair<std::string, std::string> read_command_from_cin(const std::set<std::string>& commandsWithArgument) {
+std::string read_command_from_cin() {
     std::string cmd;
     std::cin >> cmd;
-    if (commandsWithArgument.contains(cmd)) {
-        std::string argument;
-        std::cin >> argument;
-        return std::make_pair(cmd, argument);
-    }
-    return std::make_pair(cmd, "");
+    return cmd;
+}
+
+///Читає аргумент команди
+std::string read_argument_from_cin() {
+    std::string arg;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // чисто щоб пофіксить проблему з getline
+    std::getline(std::cin, arg);
+    return arg;
 }
 
 ///Додає завдання в список
 void add_task(std::vector<TaskObj>& tasks) {
     std::cout << "> ";
-    std::string content;
-    std::getline(std::cin, content);
+    const auto content = read_argument_from_cin();
     if (!content.empty())
         tasks.emplace_back(content);
 }
 
 ///Видаляє завдання з списку по id
-void remove_task(std::vector<TaskObj>& tasks, const std::string& argument) {
-    const auto id = std::stoi(argument);
+void remove_task(std::vector<TaskObj>& tasks) {
+    const auto id = std::stoi(read_command_from_cin());
     if (id > tasks.size() || id < 0)
         throw std::runtime_error("Task ID out of range");
     tasks.erase(tasks.begin() + id);
@@ -118,8 +116,9 @@ void load_tasks(const std::string& path, std::vector<TaskObj>& tasks) {
     from_json(j, tasks);
 }
 
-void mark_task(std::vector<TaskObj>& tasks, const std::string& argument) {
-    const auto id = std::stoi(argument);
+void mark_task(std::vector<TaskObj>& tasks) {
+    std::cout << "> ";
+    const auto id = std::stoi(read_command_from_cin());
     if (id > tasks.size() || id < 0)
         throw std::runtime_error("Task ID out of range");
     tasks.at(id).flag = !tasks.at(id).flag;
@@ -132,7 +131,6 @@ int main() {
     std::string current_path = DEFAULT_PATH;
     bool isRunning = true;
     std::vector<TaskObj> tasks;
-    const std::set<std::string> commandsWithArgument = {"remove", "mark"};
 
     //Перше завантаження по дефолтному шляху
     load_tasks(current_path, tasks);
@@ -141,24 +139,23 @@ int main() {
     while (isRunning) {
         try {
             //Обробка команд
-            const auto cmd = read_command_from_cin(commandsWithArgument);
-            if (cmd.first == "exit")
+            const auto cmd = read_command_from_cin();
+            if (cmd == "exit")
                 isRunning = false;
-            else if (cmd.first == "add") {
+            else if (cmd == "add") {
                 add_task(tasks);
-            } else if (cmd.first == "remove") {
-                remove_task(tasks, cmd.second);
-            } else if (cmd.first == "show_all") {
+            } else if (cmd == "remove") {
+                remove_task(tasks);
+            } else if (cmd == "show_all") {
                 print_tasks(tasks);
-            } else if (cmd.first == "mark") {
-                mark_task(tasks, cmd.second);
-            } else {
-                std::cout << "Unknown command: " << cmd.first << std::endl;
-            }
+            } else if (cmd == "mark") {
+                mark_task(tasks);
+            } else if (cmd == )
         } catch (std::runtime_error& e) {
             std::cout << e.what() << std::endl;
         }
     }
+
     //Зберігання завдань при виході із програми
     save_tasks(current_path, tasks);
 
