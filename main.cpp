@@ -89,6 +89,7 @@ std::string read_argument_from_cin() {
 
 ///Додає завдання в список
 void add_task(std::vector<TaskObj>& tasks) {
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::cout << "> ";
     const auto content = read_argument_from_cin();
     if (!content.empty())
@@ -150,7 +151,7 @@ int main() {
                 print_tasks(tasks);
             } else if (cmd == "mark") {
                 mark_task(tasks);
-            } else if (cmd == )
+            }
         } catch (std::runtime_error& e) {
             std::cout << e.what() << std::endl;
         }
